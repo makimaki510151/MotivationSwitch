@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超爆発！やる気スイッチ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container">
+        <button id="motivationSwitch" class="switch off">
+            <span class="indicator">やる気 OFF</span>
+        </button>
+
+        <div id="motivationDisplay" class="display-area">
+            押して、やる気を爆発させろ！
+        </div>
+
+        <div id="textBlastContainer"></div>
+    </div>
+
+    <audio id="onSound" src="on.mp3" preload="auto"></audio>
+    <audio id="offSound" src="off.mp3" preload="auto"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

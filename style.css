@@ -1,0 +1,171 @@
+/* リセットと基本スタイル */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    transition: background-color 0.5s ease-in-out;
+    overflow: hidden; /* パーティクルがはみ出さないように */
+    position: relative; /* 子要素のposition: absoluteの基準 */
+}
+
+/* キャンバスを全面に配置 */
+#particleCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* 最背面 */
+    pointer-events: none; /* クリックを透過させる */
+}
+
+/* コンテナ */
+.container {
+    text-align: center;
+    position: relative; /* スイッチやテキストがパーティクルより手前に来るように */
+    z-index: 1; /* パーティクルより前面 */
+}
+
+/* スイッチ本体のスタイル */
+.switch {
+    width: 250px;
+    height: 100px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 9px #999;
+    transition: all 0.1s ease;
+    margin-bottom: 50px;
+    position: relative;
+    z-index: 2; /* 最前面 */
+}
+
+/* スイッチOFF時のスタイル */
+.switch.off {
+    background-color: #dc3545; /* 赤 */
+}
+
+/* スイッチON時のスタイル */
+.switch.on {
+    background-color: #28a745; /* 緑 */
+}
+
+/* スイッチを押したときのスタイル (カチッと感) */
+.switch:active {
+    box-shadow: 0 5px #666;
+    transform: translateY(4px);
+}
+
+/* やる気演出エリアの基本スタイル */
+.display-area {
+    font-size: 24px;
+    color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+    min-height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: all 0.5s ease;
+    position: relative;
+    z-index: 2; /* 最前面 */
+}
+
+/* === やる気爆発時のアニメーション === */
+
+/* スイッチON時のBody背景色 (とんでもない演出その1) */
+body.motivation-active {
+    background: linear-gradient(45deg, #ff00cc, #3333ff, #ffcc00);
+    background-size: 400% 400%;
+    animation: gradientAnimation 5s ease infinite;
+}
+
+/* グラデーションアニメーション */
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* やる気演出エリアのスタイル (とんでもない演出その2: テキストの爆発) */
+.display-area.active {
+    background-color: transparent;
+    border: 5px dashed gold;
+    color: white;
+    font-size: 48px;
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff; /* ネオン効果 */
+    animation: shake 0.5s infinite, pulse 1s infinite alternate; /* 震えと点滅 */
+}
+
+/* 震えアニメーション */
+@keyframes shake {
+    0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+}
+
+/* 点滅アニメーション */
+@keyframes pulse {
+    from { opacity: 0.9; }
+    to { opacity: 1; }
+}
+
+
+/* 大量の文字のコンテナ */
+#textBlastContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1; /* やる気ディスプレイの後ろ、キャンバスの手前 */
+}
+
+/* 個々の文字のスタイルとアニメーション */
+.blast-char {
+    position: absolute;
+    font-size: 30px; /* 文字のサイズを調整 */
+    font-weight: bold;
+    color: #fff; /* 白い文字 */
+    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ff9900; /* ゴールドのネオン */
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+/* 文字の出現・拡散アニメーション */
+@keyframes textBlast {
+    0% {
+        transform: translate(0, 0) scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    20% {
+        transform: translate(var(--x), var(--y)) scale(1) rotate(var(--rot));
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(1.5) rotate(var(--rot));
+        opacity: 0;
+    }
+}
