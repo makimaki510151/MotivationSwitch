@@ -8,8 +8,9 @@ body {
     font-family: 'Arial', sans-serif;
     background-color: #f0f0f0;
     transition: background-color 0.5s ease-in-out;
-    overflow: hidden; /* パーティクルがはみ出さないように */
-    position: relative; /* 子要素のposition: absoluteの基準 */
+    overflow: hidden; 
+    position: relative; 
+    touch-action: manipulation; /* スマホでタップ時の遅延防止 */
 }
 
 /* キャンバスを全面に配置 */
@@ -19,15 +20,15 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0; /* 最背面 */
-    pointer-events: none; /* クリックを透過させる */
+    z-index: 0; 
+    pointer-events: none; 
 }
 
 /* コンテナ */
 .container {
     text-align: center;
-    position: relative; /* スイッチやテキストがパーティクルより手前に来るように */
-    z-index: 1; /* パーティクルより前面 */
+    position: relative; 
+    z-index: 1; 
 }
 
 /* スイッチ本体のスタイル */
@@ -44,7 +45,7 @@ body {
     transition: all 0.1s ease;
     margin-bottom: 50px;
     position: relative;
-    z-index: 2; /* 最前面 */
+    z-index: 2; 
 }
 
 /* スイッチOFF時のスタイル */
@@ -77,36 +78,34 @@ body {
     opacity: 1;
     transition: all 0.5s ease;
     position: relative;
-    z-index: 2; /* 最前面 */
+    z-index: 2; 
+    /* ハードウェアアクセラレーションを有効にしてパフォーマンス向上 */
+    will-change: transform, opacity;
 }
 
-/* === やる気爆発時のアニメーション === */
+/* === やる気爆発時のアニメーション (前回と同じ) === */
 
-/* スイッチON時のBody背景色 (とんでもない演出その1) */
 body.motivation-active {
     background: linear-gradient(45deg, #ff00cc, #3333ff, #ffcc00);
     background-size: 400% 400%;
     animation: gradientAnimation 5s ease infinite;
 }
 
-/* グラデーションアニメーション */
 @keyframes gradientAnimation {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-/* やる気演出エリアのスタイル (とんでもない演出その2: テキストの爆発) */
 .display-area.active {
     background-color: transparent;
     border: 5px dashed gold;
     color: white;
     font-size: 48px;
-    text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff; /* ネオン効果 */
-    animation: shake 0.5s infinite, pulse 1s infinite alternate; /* 震えと点滅 */
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff; 
+    animation: shake 0.5s infinite, pulse 1s infinite alternate; 
 }
 
-/* 震えアニメーション */
 @keyframes shake {
     0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
     10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -120,7 +119,6 @@ body.motivation-active {
     90% { transform: translate(1px, 2px) rotate(0deg); }
 }
 
-/* 点滅アニメーション */
 @keyframes pulse {
     from { opacity: 0.9; }
     to { opacity: 1; }
@@ -130,42 +128,44 @@ body.motivation-active {
 /* 大量の文字のコンテナ */
 #textBlastContainer {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
     pointer-events: none;
-    z-index: 1; /* やる気ディスプレイの後ろ、キャンバスの手前 */
+    z-index: 1; 
 }
 
 /* 個々の文字のスタイルとアニメーション */
 .blast-char {
     position: absolute;
-    font-size: 30px; /* 文字のサイズを調整 */
+    font-size: 30px; 
     font-weight: bold;
-    color: #fff; /* 白い文字 */
-    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ff9900; /* ゴールドのネオン */
+    color: #fff; 
+    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ff9900; 
     opacity: 0;
     animation-fill-mode: forwards;
+    /* ハードウェアアクセラレーションを有効 */
+    will-change: transform, opacity;
 }
 
-/* 文字の出現・拡散アニメーション */
-@keyframes textBlast {
+/* 継続的な投げ込みアニメーション */
+/* JSで設定された初期位置(from)から、画面中央付近のランダムな位置(to)へ移動させる */
+@keyframes continuousThrow {
     0% {
-        transform: translate(0, 0) scale(0) rotate(0deg);
+        transform: translate(var(--from-x), var(--from-y)) scale(0.5) rotate(0deg);
         opacity: 0;
     }
-    20% {
-        transform: translate(var(--x), var(--y)) scale(1) rotate(var(--rot));
+    10% {
         opacity: 1;
     }
     80% {
+        transform: translate(var(--to-x), var(--to-y)) scale(1) rotate(var(--rot));
         opacity: 1;
     }
     100% {
-        transform: translate(var(--x), var(--y)) scale(1.5) rotate(var(--rot));
+        transform: translate(var(--to-x), var(--to-y)) scale(1.5) rotate(var(--rot));
         opacity: 0;
     }
 }
