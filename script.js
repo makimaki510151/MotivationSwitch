@@ -6,106 +6,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.body;
     const textBlastContainer = document.getElementById('textBlastContainer');
 
-    // Web Audio APIのコンテキストを初期化 (ユーザーアクション後に作成する必要があるため、遅延して初期化)
-    let audioContext = null; 
-    let noiseSource = null; // 継続的なノイズ音源用
+    // ★ BGM要素を取得し、音量を設定 ★
+    const bgmSound = document.getElementById('bgmSound');
+    // BGMの音量を小さく設定
+    bgmSound.volume = 0.1; 
 
-    // --- Web Audio APIによる音の生成 ---
+    // --- サウンド制御関数 (シンプル化) ---
 
-    function initAudioContext() {
-        if (!audioContext) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContext = new AudioContext();
+    function startBGM() {
+        // 再生が開始されるかを確認し、途中で止まっていたら最初から再生し、ループさせる
+        if (bgmSound.paused) {
+            bgmSound.currentTime = 0;
+            // loop属性がHTML側で設定されているため、ここでは単に再生する
+            bgmSound.play().catch(error => {
+                console.log("BGMの再生に失敗しました (ユーザー操作が必要です):", error);
+            });
         }
     }
 
-    // スイッチON時の「ドッカーン！」音を生成 (音量を小さく調整)
-    function playExplosionSound() {
-        initAudioContext();
-        if (!audioContext) return;
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        // 強いノイズ音 (周波数スイープ)
-        oscillator.type = 'sawtooth'; 
-        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.05);
-        oscillator.frequency.exponentialRampToValueAtTime(1, audioContext.currentTime + 0.3); 
-
-        // 音量 (前回1.0から0.3に下げ、急激な減衰)
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); 
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
-
-        // 接続
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        // 再生開始と停止
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-    }
-
-    // スイッチOFF時の「カチッ」音を生成 (音量を小さく調整)
-    function playClickSound() {
-        initAudioContext();
-        if (!audioContext) return;
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        // 短い矩形波
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-
-        // 音量 (前回0.5から0.2に下げ)
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime); 
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
-
-        // 接続
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        // 再生開始と停止
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.05);
-    }
-    
-    // 継続的なホワイトノイズを再生する関数
-    function startContinuousNoise() {
-        initAudioContext();
-        if (!audioContext || noiseSource) return;
-
-        // 1. ノイズバッファの生成 (ホワイトノイズ)
-        const bufferSize = audioContext.sampleRate * 2; // 2秒
-        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1; // -1.0から1.0のランダムな値
-        }
-
-        // 2. 音源の作成
-        noiseSource = audioContext.createBufferSource();
-        noiseSource.buffer = noiseBuffer;
-        noiseSource.loop = true; // ループ再生
-
-        // 3. 音量制御ノード
-        const noiseGain = audioContext.createGain();
-        noiseGain.gain.setValueAtTime(0.03, audioContext.currentTime); // 非常に小さな音量に設定
-
-        // 4. 接続と再生
-        noiseSource.connect(noiseGain);
-        noiseGain.connect(audioContext.destination);
-        noiseSource.start();
-    }
-
-    // 継続的なノイズを停止する関数
-    function stopContinuousNoise() {
-        if (noiseSource) {
-            // フェードアウトさせてから停止
-            noiseSource.stop(audioContext.currentTime + 0.1); 
-            noiseSource = null;
-        }
+    function stopBGM() {
+        bgmSound.pause();
+        bgmSound.currentTime = 0; // 停止したら最初に戻す
     }
 
 
@@ -122,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationFrameId; 
     let throwIntervalId; 
 
-    // Particleクラスの定義 (省略 - 変更なし)
+    // Particleクラスの定義 (前回と同じ)
     class Particle {
         constructor(x, y, color, size, vx, vy) {
             this.x = x;
@@ -189,14 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.height = window.innerHeight;
     });
 
-    // --- 大量の文字アニメーション関連の処理 ---
+    // --- 大量の文字アニメーション関連の処理 (前回と同じ) ---
 
     const motivationWords = [
         "やる気", "覚醒", "爆発", "限界突破", "進化", "最強", "無限", "挑戦",
         "勝利", "成功", "未来", "希望", "輝け", "進め", "GO!", "YES!", "DREAM", "POWER"
     ];
 
-    // 文字を画面外から投げ込む関数 (前回と同じ)
     function createThrowingText(count = 5) {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
@@ -298,8 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchButton.classList.add('on');
             switchIndicator.textContent = 'やる気 ON!! 🚀🔥'; 
 
-            playExplosionSound(); // ドッカーン音を生成
-            startContinuousNoise(); // ★ 継続的なノイズを開始 ★
+            startBGM(); // ★ BGMを開始 ★
 
             body.classList.add('motivation-active');
             motivationDisplay.classList.add('active'); 
@@ -316,8 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchButton.classList.add('off');
             switchIndicator.textContent = 'やる気 OFF'; 
 
-            playClickSound(); // カチッ音を生成
-            stopContinuousNoise(); // ★ 継続的なノイズを停止 ★
+            stopBGM(); // ★ BGMを停止 ★
 
             body.classList.remove('motivation-active');
             motivationDisplay.classList.remove('active'); 
@@ -329,8 +247,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // スイッチボタンにクリックイベントを追加
     switchButton.addEventListener('click', toggleMotivation);
-    
-    // 初回クリック時にWeb Audio Contextを初期化 (iOSなどの制約対応)
-    switchButton.addEventListener('touchstart', initAudioContext, {once: true});
-    switchButton.addEventListener('mousedown', initAudioContext, {once: true});
 });
