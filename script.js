@@ -8,18 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Web Audio APIのコンテキストを初期化 (ユーザーアクション後に作成する必要があるため、遅延して初期化)
     let audioContext = null; 
+    let noiseSource = null; // 継続的なノイズ音源用
 
     // --- Web Audio APIによる音の生成 ---
 
     function initAudioContext() {
         if (!audioContext) {
-             // 互換性のためのプレフィックス対応
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioContext = new AudioContext();
         }
     }
 
-    // スイッチON時の「ドッカーン！」音を生成
+    // スイッチON時の「ドッカーン！」音を生成 (音量を小さく調整)
     function playExplosionSound() {
         initAudioContext();
         if (!audioContext) return;
@@ -28,13 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const gainNode = audioContext.createGain();
 
         // 強いノイズ音 (周波数スイープ)
-        oscillator.type = 'sawtooth'; // ノコギリ波
+        oscillator.type = 'sawtooth'; 
         oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.05);
-        oscillator.frequency.exponentialRampToValueAtTime(1, audioContext.currentTime + 0.3); // 急激に周波数を下げてノイズ感を出す
+        oscillator.frequency.exponentialRampToValueAtTime(1, audioContext.currentTime + 0.3); 
 
-        // 音量 (急激な減衰)
-        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+        // 音量 (前回1.0から0.3に下げ、急激な減衰)
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); 
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
 
         // 接続
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         oscillator.stop(audioContext.currentTime + 0.3);
     }
 
-    // スイッチOFF時の「カチッ」音を生成
+    // スイッチOFF時の「カチッ」音を生成 (音量を小さく調整)
     function playClickSound() {
         initAudioContext();
         if (!audioContext) return;
@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         oscillator.type = 'square';
         oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
 
-        // 音量
-        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        // 音量 (前回0.5から0.2に下げ)
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime); 
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
 
         // 接続
@@ -70,6 +70,44 @@ document.addEventListener('DOMContentLoaded', () => {
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.05);
     }
+    
+    // 継続的なホワイトノイズを再生する関数
+    function startContinuousNoise() {
+        initAudioContext();
+        if (!audioContext || noiseSource) return;
+
+        // 1. ノイズバッファの生成 (ホワイトノイズ)
+        const bufferSize = audioContext.sampleRate * 2; // 2秒
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1; // -1.0から1.0のランダムな値
+        }
+
+        // 2. 音源の作成
+        noiseSource = audioContext.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        noiseSource.loop = true; // ループ再生
+
+        // 3. 音量制御ノード
+        const noiseGain = audioContext.createGain();
+        noiseGain.gain.setValueAtTime(0.03, audioContext.currentTime); // 非常に小さな音量に設定
+
+        // 4. 接続と再生
+        noiseSource.connect(noiseGain);
+        noiseGain.connect(audioContext.destination);
+        noiseSource.start();
+    }
+
+    // 継続的なノイズを停止する関数
+    function stopContinuousNoise() {
+        if (noiseSource) {
+            // フェードアウトさせてから停止
+            noiseSource.stop(audioContext.currentTime + 0.1); 
+            noiseSource = null;
+        }
+    }
+
 
     // --- パーティクル関連の処理 ---
 
@@ -84,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationFrameId; 
     let throwIntervalId; 
 
-    // Particleクラスの定義 (前回と同じ)
+    // Particleクラスの定義 (省略 - 変更なし)
     class Particle {
         constructor(x, y, color, size, vx, vy) {
             this.x = x;
@@ -116,16 +154,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // パーティクルを生成する関数 (爆発力強化！)
+    // パーティクルを生成する関数 (前回と同じ)
     function createThrowingParticles(count, originX, originY, angle) {
         for (let i = 0; i < count; i++) {
             const colors = ['#FFD700', '#FF4500', '#ADFF2F', '#87CEEB', '#FF69B4', '#FFFFFF'];
             const color = colors[Math.floor(Math.random() * colors.length)];
-            const size = Math.random() * 8 + 3; // サイズを大きく
+            const size = Math.random() * 8 + 3; 
             
-            // 投げ込みの方向を決定（角度±40度の範囲に拡大）
             const randomAngle = angle + (Math.random() * 80 - 40) * (Math.PI / 180); 
-            const speed = Math.random() * 15 + 10; // 速度を大幅にアップ！
+            const speed = Math.random() * 15 + 10; 
             const vx = speed * Math.cos(randomAngle);
             const vy = speed * Math.sin(randomAngle);
 
@@ -159,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "勝利", "成功", "未来", "希望", "輝け", "進め", "GO!", "YES!", "DREAM", "POWER"
     ];
 
-    // 文字を画面外から投げ込む関数 (到達範囲拡大)
+    // 文字を画面外から投げ込む関数 (前回と同じ)
     function createThrowingText(count = 5) {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
@@ -173,11 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let toX, toY;     
             const side = Math.floor(Math.random() * 4); 
 
-            // 画面外のランダムな位置を開始点に設定
             if (side === 0) { // 上から
                 fromX = Math.random() * viewportWidth;
                 fromY = -50;
-                // 到達目標を画面全体（90%）に設定
                 toX = Math.random() * viewportWidth * 0.9 - viewportWidth * 0.05 - fromX; 
                 toY = Math.random() * viewportHeight * 0.9 - viewportHeight * 0.05 - fromY;
             } else if (side === 1) { // 右から
@@ -200,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
             char.style.left = `${fromX}px`;
             char.style.top = `${fromY}px`;
 
-            // CSS変数としてアニメーションに渡す
             char.style.setProperty('--from-x', '0px');
             char.style.setProperty('--from-y', '0px');
             char.style.setProperty('--to-x', `${toX}px`);
@@ -219,23 +253,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // 継続的な文字・パーティクル生成ロジック
+    // 継続的な文字・パーティクル生成ロジック (前回と同じ)
     function startContinuousThrowing() {
         if (throwIntervalId) return; 
 
-        // 0.2秒に短縮し、より頻繁に生成
         throwIntervalId = setInterval(() => {
             if (!isMotivationActive) {
                 stopContinuousThrowing();
                 return;
             }
 
-            createThrowingText(5); // 毎度5個の文字を生成に増加
+            createThrowingText(5); 
 
             const w = window.innerWidth;
             const h = window.innerHeight;
 
-            // 画面四隅と方向 (0度:右, 90度:下, 180度:左, 270度:上)
             const throwPoints = [
                 { x: 0, y: 0, angle: 45 },      
                 { x: w, y: 0, angle: 135 },     
@@ -244,9 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             const point = throwPoints[Math.floor(Math.random() * 4)];
-            createThrowingParticles(50, point.x, point.y, point.angle * (Math.PI / 180)); // 毎度50個に増加
+            createThrowingParticles(50, point.x, point.y, point.angle * (Math.PI / 180));
 
-        }, 200); // 200ミリ秒間隔で実行に短縮
+        }, 200); 
     }
 
     function stopContinuousThrowing() {
@@ -267,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchIndicator.textContent = 'やる気 ON!! 🚀🔥'; 
 
             playExplosionSound(); // ドッカーン音を生成
+            startContinuousNoise(); // ★ 継続的なノイズを開始 ★
 
             body.classList.add('motivation-active');
             motivationDisplay.classList.add('active'); 
@@ -284,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchIndicator.textContent = 'やる気 OFF'; 
 
             playClickSound(); // カチッ音を生成
+            stopContinuousNoise(); // ★ 継続的なノイズを停止 ★
 
             body.classList.remove('motivation-active');
             motivationDisplay.classList.remove('active'); 
