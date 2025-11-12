@@ -151,7 +151,6 @@ body.motivation-active {
 }
 
 /* 継続的な投げ込みアニメーション */
-/* JSで設定された初期位置(from)から、画面中央付近のランダムな位置(to)へ移動させる */
 @keyframes continuousThrow {
     0% {
         transform: translate(var(--from-x), var(--from-y)) scale(0.5) rotate(0deg);
@@ -161,6 +160,7 @@ body.motivation-active {
         opacity: 1;
     }
     80% {
+        /* 文字の到達範囲を画面全体に拡大するため、到達距離を伸ばす */
         transform: translate(var(--to-x), var(--to-y)) scale(1) rotate(var(--rot));
         opacity: 1;
     }
