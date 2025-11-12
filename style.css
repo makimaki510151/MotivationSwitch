@@ -27,7 +27,6 @@ body {
 /* コンテナ */
 .container {
     text-align: center;
-    position: relative; 
     z-index: 1; 
 }
 
